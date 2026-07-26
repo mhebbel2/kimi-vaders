@@ -10,7 +10,7 @@ A faithful Space Invaders clone written from scratch in vanilla HTML, CSS, and J
 
 **Live game:** https://mhebbel2.github.io/kimi-vaders/
 
-Hosted for free via GitHub Pages. No install, no downloads, no dependencies. On iOS/Android, add it to your home screen from the browser menu for a fullscreen, chromeless experience.
+Hosted for free via GitHub Pages. No install, no downloads, no dependencies. It's a full **PWA** — on iOS/Android (and desktop Chrome/Edge), add it to your home screen from the browser menu for a fullscreen, chromeless, **offline-capable** experience.
 
 ### Controls
 
@@ -23,13 +23,18 @@ Hosted for free via GitHub Pages. No install, no downloads, no dependencies. On 
 
 ## Architecture
 
-Kimi-vaders is a **zero-dependency, single-page webapp**. There is no bundler, no framework, and no build step — just three source files that run directly in the browser:
+Kimi-vaders is a **zero-dependency, single-page webapp** and **installable PWA**. There is no bundler, no framework, and no build step — the source files run directly in the browser:
 
 ```
 kimi-vaders/
-├── index.html   # Shell, canvas, control buttons
-├── style.css    # Mobile-first layout, pixelated upscaling
-└── game.js      # Engine, gameplay, rendering, and audio (all in one file)
+├── index.html       # Shell, canvas, control buttons, SW registration
+├── style.css        # Mobile-first layout, pixelated upscaling
+├── game.js          # Engine, gameplay, rendering, and audio (all in one file)
+├── manifest.json    # Web app manifest (name, icons, standalone display)
+├── sw.js            # Service worker — precaches the app shell for offline play
+├── icons/           # App icons (192/512, maskable, apple-touch-icon)
+└── tools/
+    └── make-icons.mjs  # Regenerates icons from the crab sprite: node tools/make-icons.mjs
 ```
 
 Everything in `game.js` lives inside a single `(() => { ... })();` IIFE — the engine, sprites, audio, and state are fully encapsulated in one closure and never leak to the global scope.
@@ -88,6 +93,13 @@ All page scroll, pinch-zoom, double-tap-zoom, and long-press context menu are di
 - On-screen buttons are 62 px tall and flex-sized so they're easy to hit with a thumb.
 - High scores are persisted to `localStorage` per device.
 
+### PWA
+
+The app is installable and fully playable **offline**:
+
+- `manifest.json` declares standalone display, a black theme, and maskable + regular icons (generated from the in-game crab sprite by `tools/make-icons.mjs`).
+- `sw.js` precaches the entire app shell on install, serves static assets **cache-first**, and falls back to the cached shell for navigations when offline. Old caches are purged on activate; bump the `CACHE` constant in `sw.js` whenever any precached asset changes.
+
 ---
 
 ## Running locally
@@ -99,7 +111,7 @@ python3 -m http.server 8000
 # then open http://localhost:8000/
 ```
 
-You can also open `index.html` directly in a browser, though some browsers block `localStorage` under the `file://` protocol (the rest of the game still works).
+You can also open `index.html` directly in a browser, though some browsers block `localStorage` under the `file://` protocol (the rest of the game still works). The service worker (offline mode) requires the app to be served over HTTP(S) — `localhost` counts.
 
 ---
 
